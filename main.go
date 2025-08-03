@@ -24,20 +24,21 @@ func main() {
 	handler := http.StripPrefix("/app", http.FileServer(http.Dir(".")))
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(handler))
+
 	
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
 
-	mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /api/metrics", func(w http.ResponseWriter, r *http.Request) {
 		hits := apiCfg.fileserverHits.Load()
 		hitsMsg := fmt.Sprintf("Hits: %d", hits)
 		w.Write([]byte(hitsMsg))
 	})
 
-	mux.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /api/reset", func(w http.ResponseWriter, r *http.Request) {
 		apiCfg.fileserverHits.Store(0)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Hits reset to 0"))
