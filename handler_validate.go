@@ -10,7 +10,7 @@ func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) {
 		Body string `json:"body"`
 	}
 	type returnVals struct {
-		Valid bool `json:"valid"`
+		Cleaned string `json:"cleaned_body"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -24,8 +24,11 @@ func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, "Chirp is too long", nil)
 		return
 	}
+	cleanedBody, err := removeBadWords(params.Body)
+	if err != nil {
+		respondWithError(w, 500, "error cleaning body", err)
+	}
 	respondWithJSON(w, 200, returnVals{
-		Valid: true,
+		Cleaned: cleanedBody,
 	})
-	
 }
