@@ -3,14 +3,13 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"github.com/google/uuid"
 )
 
-func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) {
+func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) (string, uuid.UUID) {
 	type parameters struct {
 		Body string `json:"body"`
-	}
-	type returnVals struct {
-		Cleaned string `json:"cleaned_body"`
+		UserID uuid.UUID `json:"user_id"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -18,17 +17,16 @@ func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 500, "error decoding parameters", err)
-		return
+		return "", uuid.UUID{}
 	}
 	if len(params.Body) > 140 {
 		respondWithError(w, 400, "Chirp is too long", nil)
-		return
+		return "", uuid.UUID{}
 	}
 	cleanedBody, err := removeBadWords(params.Body)
 	if err != nil {
 		respondWithError(w, 500, "error cleaning body", err)
 	}
-	respondWithJSON(w, 200, returnVals{
-		Cleaned: cleanedBody,
-	})
+
+	return cleanedBody, params.UserID
 }
