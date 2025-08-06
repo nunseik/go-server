@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"sync/atomic"
+
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/nunseik/go-server/internal/database"
@@ -50,6 +51,7 @@ func main() {
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlerChirpsCreate)
 	mux.HandleFunc("POST /api/users", apiCfg.handlerUserCreation)
 	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetChirps)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetChirp)
 
 	srv := &http.Server{Handler: mux, Addr: ":" + port}
 

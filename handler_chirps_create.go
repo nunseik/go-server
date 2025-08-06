@@ -55,3 +55,24 @@ func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
 
 	respondWithJSON(w, 200, chirps)
 }
+
+func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
+	chirpIDStr := r.PathValue("chirpID")
+	chirpID, err := uuid.Parse(chirpIDStr)
+	if err != nil {
+		respondWithError(w, 404, "invalid chirp ID", err)
+		return
+	}
+	chirp, err := cfg.dbQueries.GetSingleChirp(r.Context(), chirpID)
+	if err != nil {
+		respondWithError(w, 404, "error getting chirp by id", err)
+		return
+	}
+	respondWithJSON(w, 200, Chirp{
+		ID: chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body: chirp.Body,
+		UserID: chirp.UserID,
+	})
+}	
