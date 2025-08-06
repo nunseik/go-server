@@ -14,6 +14,7 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	dbQueries *database.Queries
+	platform string
 }
 
 
@@ -29,11 +30,14 @@ func main() {
 		log.Printf("error opening sql db: %s", err)
 	}
 
+	devMode := os.Getenv("PLATFORM")
+
 	dbQueries := database.New(db)
 
 
 	apiCfg := apiConfig{
 		dbQueries: dbQueries,
+		platform: devMode,
 	}
 	handler := http.StripPrefix("/app", http.FileServer(http.Dir(".")))
 	mux := http.NewServeMux()
@@ -44,7 +48,8 @@ func main() {
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("POST /api/validate_chirp", handlerChirpsValidate)
-	
+	mux.HandleFunc("POST /api/users", apiCfg.handlerUserCreation)	
+
 	srv := &http.Server{Handler: mux, Addr: ":" + port}
 
 	log.Printf("Serving files on port: %s\n", port)
