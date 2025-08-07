@@ -14,8 +14,9 @@ import (
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
-	dbQueries *database.Queries
-	platform string
+	dbQueries    *database.Queries
+	platform     string
+	secretKey    string
 }
 
 
@@ -31,14 +32,15 @@ func main() {
 		log.Printf("error opening sql db: %s", err)
 	}
 
-	devMode := os.Getenv("PLATFORM")
-
+	platform := os.Getenv("PLATFORM")
+	secretKey := os.Getenv("SECRET_KEY")
 	dbQueries := database.New(db)
 
 
 	apiCfg := apiConfig{
 		dbQueries: dbQueries,
-		platform: devMode,
+		platform:  platform,
+		secretKey: secretKey,
 	}
 	handler := http.StripPrefix("/app", http.FileServer(http.Dir(".")))
 	mux := http.NewServeMux()

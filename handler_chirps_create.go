@@ -3,7 +3,9 @@ package main
 import (
 	"net/http"
 	"time"
+
 	"github.com/google/uuid"
+	"github.com/nunseik/go-server/internal/auth"
 	"github.com/nunseik/go-server/internal/database"
 )
 
@@ -17,11 +19,23 @@ type Chirp struct {
 
 func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request) {
 	
-	cleanedBody, userId := handlerChirpsValidate(w, r)
+	tokenHeader, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, 401, "unauthorized", err)
+		return
+	}
+
+	userID, err := auth.ValidateJWT(tokenHeader, cfg.secretKey)
+	if err != nil {
+		respondWithError(w, 401, "unauthorized", err)
+		return
+	}
+
+	cleanedBody := handlerChirpsValidate(w, r)
 
 	chirp, err := cfg.dbQueries.CreateChirp(r.Context(), database.CreateChirpParams{
 		Body: cleanedBody,
-		UserID: userId,
+		UserID: userID,
 	})
 	if err != nil {
 		respondWithError(w, 500, "error creating chirp", err)
