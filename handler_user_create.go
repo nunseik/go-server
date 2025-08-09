@@ -54,3 +54,53 @@ func (cfg *apiConfig) handlerUserCreation(w http.ResponseWriter, r *http.Request
 		Email: user.Email,
 	})
 }
+
+func (cfg *apiConfig) handlerUserUpdate(w http.ResponseWriter, r *http.Request) {
+	accessToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, 401, "unauthorized", err)
+		return
+	}
+
+	userID, err := auth.ValidateJWT(accessToken, cfg.secretKey)
+	if err != nil {
+		respondWithError(w, 401, "unauthorized", err)
+		return
+	}
+
+	type parameters struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err = decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, 500, "error decoding parameters", err)
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(params.Password)
+	if err != nil {
+		respondWithError(w, 500, "error hashing password", err)
+		return
+	}
+
+	user, err := cfg.dbQueries.UpdateUser(r.Context(), database.UpdateUserParams{
+		Email:          params.Email,
+		HashedPassword: hashedPassword,
+		ID:             userID,
+	})
+	if err != nil {
+		respondWithError(w, 500, "error updating user", err)
+		return
+	}
+
+	respondWithJSON(w, 200, User{
+		ID:        user.ID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Email:     user.Email,
+	})
+}
