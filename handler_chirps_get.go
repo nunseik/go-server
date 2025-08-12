@@ -12,6 +12,21 @@ func (cfg *apiConfig) handlerChirpsRetrieve(w http.ResponseWriter, r *http.Reque
 		respondWithError(w, 500, "error getting chirps", err)
 	}
 
+	authorID := r.URL.Query().Get("author_id")
+
+	if authorID != "" {
+		authorUUID, err := uuid.Parse(authorID)
+		if err != nil {
+			respondWithError(w, 400, "invalid author ID", err)
+			return
+		}
+		dbChirps, err = cfg.dbQueries.GetChirpsByAuthorID(r.Context(), authorUUID)
+		if err != nil {
+			respondWithError(w, 500, "error getting chirps by author ID", err)
+			return
+		}
+	}
+
 	chirps := make([]Chirp, len(dbChirps))
 	for i, dbChirp := range dbChirps {
 		chirps[i] = Chirp{
