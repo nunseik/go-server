@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+	"sort"
+
 	"github.com/google/uuid"
 	"github.com/nunseik/go-server/internal/auth"
 )
@@ -13,6 +15,7 @@ func (cfg *apiConfig) handlerChirpsRetrieve(w http.ResponseWriter, r *http.Reque
 	}
 
 	authorID := r.URL.Query().Get("author_id")
+	sorting := r.URL.Query().Get("sort")
 
 	if authorID != "" {
 		authorUUID, err := uuid.Parse(authorID)
@@ -36,6 +39,12 @@ func (cfg *apiConfig) handlerChirpsRetrieve(w http.ResponseWriter, r *http.Reque
 			Body: dbChirp.Body,
 			UserID: dbChirp.UserID,
 		}
+	}
+
+	if sorting == "desc" {
+		sort.Slice(chirps, func(i, j int) bool {
+			return chirps[i].CreatedAt.After(chirps[j].CreatedAt)
+		})
 	}
 
 	respondWithJSON(w, 200, chirps)
